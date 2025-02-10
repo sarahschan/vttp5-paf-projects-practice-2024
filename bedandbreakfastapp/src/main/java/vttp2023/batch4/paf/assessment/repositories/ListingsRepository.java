@@ -93,11 +93,6 @@ public class ListingsRepository {
 	}
 
 
-
-
-
-
-
 	// IMPORTANT: DO NOT MODIFY THIS METHOD UNLESS REQUESTED TO DO SO
 	// If this method is changed, any assessment task relying on this method will
 	// not be marked
