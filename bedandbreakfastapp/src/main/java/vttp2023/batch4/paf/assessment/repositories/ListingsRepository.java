@@ -5,7 +5,12 @@ import java.util.Optional;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.MatchOperation;
+import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
+import org.springframework.data.mongodb.core.aggregation.SortOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -33,8 +38,6 @@ public class ListingsRepository {
 	// 	}
 	// ])
 	//
-	// db.listings.distinct( "address.suburb" , { "address.suburb" : { $nin : ["", null] } });
-	//
 	// USING:
 	// db.listings.distinct("address.suburb", {
 	// 	"address.suburb": { $ne: "", $ne: null }
@@ -47,16 +50,53 @@ public class ListingsRepository {
 		return template.findDistinct(query, "address.suburb", "listings", String.class);
 	}
 
-	/*
-	 * Write the native MongoDB query that you will be using for this method
-	 * inside this comment block
-	 * eg. db.bffs.find({ name: 'fred }) 
-	 *
-	 *
-	 */
+
+	// db.listings.find(
+	// 	{ 
+	// 		"address.suburb": { $regex: "^Monterey$", $options: "i" },
+	// 		"price": { $lte: 50 },
+	// 		"accommodates": { $gte: 1 },
+	// 		"min_nights": { $gte: 1},
+	// 	}
+	// )
+	// .sort({ "price" : -1})
+	// .projection({ "name": 1, "accommodates": 1, "price": 1})
 	public List<AccommodationSummary> findListings(String suburb, int persons, int duration, float priceRange) {
-		return null;
+		
+		Criteria criteria = Criteria.where("address.suburb").regex(suburb, "i")
+									.and("price").lte(priceRange)
+									.and("accommodates").gte(persons)
+									.and("min_nights").gte(duration);
+		
+		MatchOperation matchCritera = Aggregation.match(criteria);
+
+		ProjectionOperation projectFields = Aggregation
+			.project("name", "accommodates", "price");
+
+		SortOperation sortByPrice = Aggregation.sort(Sort.Direction.DESC, "price");
+
+		Aggregation pipeline = Aggregation.newAggregation(matchCritera, projectFields, sortByPrice);
+
+		List<Document> documents = template.aggregate(pipeline, "listings", Document.class).getMappedResults();
+
+		List<AccommodationSummary> accomodationSummaries = documents.stream()
+			.map( d -> {
+				AccommodationSummary accommodationSummary = new AccommodationSummary();
+					accommodationSummary.setId(d.getString("_id"));
+					accommodationSummary.setName(d.getString("name"));
+					accommodationSummary.setAccomodates(d.getInteger("accommodates"));
+					accommodationSummary.setPrice(d.get("price", Number.class).floatValue());
+				return accommodationSummary;
+			}).toList();
+
+		return accomodationSummaries;
 	}
+
+
+
+
+
+
 
 	// IMPORTANT: DO NOT MODIFY THIS METHOD UNLESS REQUESTED TO DO SO
 	// If this method is changed, any assessment task relying on this method will
