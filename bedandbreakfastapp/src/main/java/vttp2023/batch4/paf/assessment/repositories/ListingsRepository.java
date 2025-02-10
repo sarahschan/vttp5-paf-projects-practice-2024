@@ -16,21 +16,35 @@ import vttp2023.batch4.paf.assessment.models.AccommodationSummary;
 
 @Repository
 public class ListingsRepository {
-	
-	// You may add additional dependency injections
 
 	@Autowired
 	private MongoTemplate template;
 
-	/*
-	 * Write the native MongoDB query that you will be using for this method
-	 * inside this comment block
-	 * eg. db.bffs.find({ name: 'fred }) 
-	 *
-	 *
-	 */
+	// db.listings.aggregate([
+	// 	{
+	// 		$match: {
+	// 			"address.suburb": { $ne: null, $ne: "" } 
+	// 		}
+	// 	},
+	// 	{
+	// 		$group: {
+	// 			_id: "$address.suburb"
+	// 		}
+	// 	}
+	// ])
+	//
+	// db.listings.distinct( "address.suburb" , { "address.suburb" : { $nin : ["", null] } });
+	//
+	// USING:
+	// db.listings.distinct("address.suburb", {
+	// 	"address.suburb": { $ne: "", $ne: null }
+	// });
 	public List<String> getSuburbs(String country) {
-		return null;
+
+		Criteria criteria = Criteria.where("address.suburb").ne("").ne(null);
+		Query query = new Query(criteria);
+
+		return template.findDistinct(query, "address.suburb", "listings", String.class);
 	}
 
 	/*
