@@ -53,10 +53,10 @@ public class ListingsRepository {
 
 	// db.listings.find(
 	// 	{ 
-	// 		"address.suburb": { $regex: "^Monterey$", $options: "i" },
-	// 		"price": { $lte: 50 },
-	// 		"accommodates": { $gte: 1 },
-	// 		"min_nights": { $gte: 1},
+	// 		"address.suburb": { $regex: "^<suburb>$", $options: "i" },
+	// 		"price": { $lte: <priceRange> },
+	// 		"accommodates": { $gte: <persons> },
+	// 		"min_nights": { $lte: <duration>},
 	// 	}
 	// )
 	// .sort({ "price" : -1})
@@ -66,7 +66,7 @@ public class ListingsRepository {
 		Criteria criteria = Criteria.where("address.suburb").regex(suburb, "i")
 									.and("price").lte(priceRange)
 									.and("accommodates").gte(persons)
-									.and("min_nights").gte(duration);
+									.and("min_nights").lte(duration);
 		
 		MatchOperation matchCritera = Aggregation.match(criteria);
 

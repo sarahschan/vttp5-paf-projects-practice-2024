@@ -35,4 +35,11 @@ public class Bookings {
 	public void setDuration(int duration) { this.duration = duration; }
 	public int getDuration() { return this.duration; }
 
+	// DELETE THIS
+	@Override
+	public String toString() {
+		return "Bookings [bookingId=" + bookingId + ", listingId=" + listingId + ", name=" + name + ", email=" + email
+				+ ", duration=" + duration + "]";
+	}
+	
 }
