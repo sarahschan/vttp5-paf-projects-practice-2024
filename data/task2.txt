@@ -1,1 +1,46 @@
-Write your Task 2 answers in this file
+2.1 - For import into local mongo:
+        mongoimport --db=bedandbreakfast --collection=listings_and_reviews --type=json --file=listings.json
+
+      For import into hosted mongo:
+        mongoimport --db=bedandbreakfast --collection=listings_and_reviews --type=json --file=listings.json --uri="<mongo_public_url>/?authSource=admin"
+
+
+2.2 - To filter all Australian accomodations into a new collection called listings:
+    db.listings_and_reviews.aggregate([
+        {
+            $match: {
+                "address.country": { $regex: "^australia$", $options: "i" }
+            }
+        },
+        { $out: "listings"}
+    ]);
+
+
+2.3 - To extract reviews and perform data cleansing:
+    db.listings.aggregate([
+        { $unwind: "$reviews"},
+        { $project: {
+            "_id": "$reviews._id",
+            "date": "$reviews.date",
+            "listing_id": "$reviews.listing_id",
+            "reviewer_name" : { $replaceAll: {input: "$reviews.reviewer_name", find: ",", replacement: ""}},
+            "comments" : { $replaceAll: {
+                            input: { $replaceAll: {input: "$reviews.comments", find: "\n", replacement: ""}},
+                                find: "\r", replacement: ""
+                            }
+                        }
+            }
+        }
+    ]);
+
+
+2.4 - To delete reviews attribute from listings collection:
+    db.listings.updateMany(
+        {},
+        { $unset: { reviews: 1 } }
+    );
+
+
+2.5 - To export reviews collection into a CSV file:
+    >> in /data directory
+    mongoexport --db=bedandbreakfast --collection=reviews --type=csv --fields=date,listing_id,reviewer_name,comments --out=reviews.csv
